@@ -57,7 +57,7 @@ button#resetButton {
     transition: 300ms;
 }
 
-button#resetButton {
+button#resetButton:hover {
     background-color: #284b8a;
     box-shadow: none;
 }
