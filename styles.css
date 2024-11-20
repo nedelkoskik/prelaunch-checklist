@@ -1,0 +1,63 @@
+body {
+    padding: 100px 0;
+    margin: 0;
+    font-family: monospace;
+}
+
+h1 {
+    color: #284b8a;
+    font-size: 35px;
+    margin: 0 0 45px;
+    text-align: center;
+}
+
+.checklist {
+    height: auto;
+    margin: 0 auto 45px;
+    max-width: 500px;
+    width: 100%;
+}
+
+.checklist-single {
+    margin-bottom: 25px;
+}
+
+.checklist-single__title {
+    color: #284b8a;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+input {
+    margin: 0;
+}
+
+.checklist-single__item {
+    align-items: center;
+    column-gap: 8px;
+    display: flex;
+    margin-bottom: 5px;
+}
+
+.launch {
+    color: #ff4300;
+    font-size: 40px;
+    text-align: center;
+}
+
+button#resetButton {
+    background-color: #ff4300;
+    border: none;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    color: white;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 10px 20px;
+    transition: 300ms;
+}
+
+button#resetButton {
+    background-color: #284b8a;
+    box-shadow: none;
+}
