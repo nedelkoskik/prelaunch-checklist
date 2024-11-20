@@ -39,11 +39,11 @@ function setCookie(name, value, days) {
 
 // Function to get a cookie by name
 function getCookie(name) {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.indexOf(name + "=") === 0) {
-            return cookie.substring((name + "=").length, cookie.length);
+    const cookies = document.cookie.split(';'); // Get all cookies and break this string into array
+    for (let i = 0; i < cookies.length; i++) { //Loop through all cookies
+        const cookie = cookies[i].trim(); // Trim extra spaces from cookie string
+        if (cookie.indexOf(name + "=") === 0) { // Check if cookie starts with the given name
+            return cookie.substring((name + "=").length, cookie.length); // Extract the value. Exclude the name and = sign and returns everything afret = sign
         }
     }
     return null;
