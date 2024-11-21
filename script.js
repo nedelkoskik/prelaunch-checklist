@@ -46,7 +46,7 @@ function getCookie(name) {
             return cookie.substring((name + "=").length, cookie.length); // Extract the value. Exclude the name and = sign and returns everything afret = sign
         }
     }
-    console.log(cookies);
+    console.log(document.cookie);
     return null;
 
 }
