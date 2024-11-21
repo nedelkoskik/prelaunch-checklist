@@ -1,96 +1,161 @@
 document.addEventListener('DOMContentLoaded', () => {
     const domainForm = document.getElementById('domain-form');
-    const domainInput = document.getElementById('domain');
+    const domainInput = document.getElementById('domain-input');
     const dropdownMenu = document.getElementById('domain-dropdown__menu');
+    const dynamicDomainSpan = document.getElementById('dynamic-domain');
     const checklistContainer = document.querySelector('.checklist');
+    const backButton = document.querySelector('.back');
     const resetButton = document.getElementById('resetButton');
-    const checklists = {}; // Object to store checklists for each domain
 
-    // Fetch existing domains and populate the dropdown
-    fetchDomains();
+    // Store checklists per domain in cookies
+    const domainKey = "domains"; // Key for storing domains
+    const checklistPrefix = "checklist_";
 
-    // Handle domain form submission
-    domainForm.addEventListener('submit', async (e) => {
+    // Initialize checklist
+    loadDomains();
+
+    // Event listener for domain submission
+    domainForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const newDomain = domainInput.value.trim();
-        if (newDomain) {
-            await saveDomain(newDomain); // Save domain to server
-            domainInput.value = ''; // Clear input field
-        }
+        const domain = domainInput.value.trim();
+        if (!domain) return;
+
+        addDomainToDropdown(domain);
+        saveDomain(domain);
+        loadChecklist(domain);
+        dropdownMenu.value = domain;
+        domainInput.value = '';
     });
 
-    // Handle dropdown selection
-    dropdownMenu.addEventListener('change', (e) => {
-        const selectedDomain = e.target.value;
+    // Event listener for domain dropdown change
+    dropdownMenu.addEventListener('change', () => {
+        const selectedDomain = dropdownMenu.value;
         if (selectedDomain) {
             loadChecklist(selectedDomain);
         } else {
             checklistContainer.style.display = 'none';
+            dynamicDomainSpan.textContent = 'WordPress Site';
         }
     });
 
-    // Load the saved checklist for a domain
+    // Event listener for back button
+    backButton.addEventListener('click', () => {
+        checklistContainer.style.display = 'none';
+    });
+
+    // Event listener for reset button
+    resetButton.addEventListener('click', () => {
+        const currentDomain = dropdownMenu.value;
+        if (currentDomain) {
+            resetChecklist(currentDomain);
+        }
+    });
+
+    // Load checklist for a given domain
     function loadChecklist(domain) {
+        dynamicDomainSpan.textContent = domain;
         checklistContainer.style.display = 'block';
 
         const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
-        const savedChecklist = checklists[domain] || {};
-
         checkboxes.forEach((checkbox) => {
-            checkbox.checked = savedChecklist[checkbox.id] || false;
+            const savedState = getCookie(`${checklistPrefix}${domain}_${checkbox.id}`);
+            checkbox.checked = savedState === 'true';
 
             checkbox.addEventListener('change', () => {
-                saveChecklistState(domain, checkbox);
+                setCookie(`${checklistPrefix}${domain}_${checkbox.id}`, checkbox.checked, 7);
             });
-        });
-
-        resetButton.addEventListener('click', () => {
-            checkboxes.forEach((checkbox) => {
-                checkbox.checked = false;
-            });
-            checklists[domain] = {}; // Reset domain's checklist
         });
     }
 
-    // Save checklist state for a domain
-    function saveChecklistState(domain, checkbox) {
-        if (!checklists[domain]) {
-            checklists[domain] = {};
+    // Reset checklist for a given domain
+    function resetChecklist(domain) {
+        const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
+        let isAnyChecked = false;
+
+        checkboxes.forEach((checkbox) => {
+            checkbox.checked = false;
+            deleteCookie(`${checklistPrefix}${domain}_${checkbox.id}`);
+        });
+
+        checkboxes.forEach((checkbox) => {
+            if (checkbox.checked) {
+                isAnyChecked = true;
+            }
+        });
+
+        if (!isAnyChecked) {
+            deleteDomain(domain);
         }
-        checklists[domain][checkbox.id] = checkbox.checked;
     }
 
-    // Fetch domains from the server
-    async function fetchDomains() {
-        const response = await fetch('domain.php');
-        const domains = await response.json();
-        populateDropdown(domains);
+    // Save a new domain to the list
+    function saveDomain(domain) {
+        let domains = JSON.parse(getCookie(domainKey) || "[]");
+        if (!domains.includes(domain)) {
+            domains.push(domain);
+            setCookie(domainKey, JSON.stringify(domains), 7);
+        }
     }
 
-    // Save a new domain to the server
-    async function saveDomain(domain) {
-        const response = await fetch('domain.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ domain }),
-        });
-        const domains = await response.json();
-        populateDropdown(domains, domain);
-    }
-
-    // Populate the dropdown with domains
-    function populateDropdown(domains, autoSelectDomain = null) {
-        dropdownMenu.innerHTML = '<option value="">-- Select Domain --</option>';
+    // Load all saved domains into the dropdown
+    function loadDomains() {
+        let domains = JSON.parse(getCookie(domainKey) || "[]");
         domains.forEach((domain) => {
+            addDomainToDropdown(domain);
+        });
+    }
+
+    // Add a domain to the dropdown
+    function addDomainToDropdown(domain) {
+        const exists = Array.from(dropdownMenu.options).some(option => option.value === domain);
+        if (!exists) {
             const option = document.createElement('option');
             option.value = domain;
             option.textContent = domain;
             dropdownMenu.appendChild(option);
+        }
+    }
+
+    // Delete a domain from the dropdown and cookies
+    function deleteDomain(domain) {
+        let domains = JSON.parse(getCookie(domainKey) || "[]");
+        domains = domains.filter((d) => d !== domain);
+        setCookie(domainKey, JSON.stringify(domains), 7);
+
+        const options = Array.from(dropdownMenu.options);
+        options.forEach((option) => {
+            if (option.value === domain) {
+                dropdownMenu.removeChild(option);
+            }
         });
 
-        if (autoSelectDomain) {
-            dropdownMenu.value = autoSelectDomain;
-            loadChecklist(autoSelectDomain);
+        if (dropdownMenu.value === domain) {
+            dropdownMenu.value = '';
+            dynamicDomainSpan.textContent = 'WordPress Site';
+            checklistContainer.style.display = 'none';
         }
+    }
+
+    // Cookie helpers
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+        const expires = "expires=" + d.toUTCString();
+        document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    }
+
+    function getCookie(name) {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.indexOf(name + "=") === 0) {
+                return cookie.substring((name + "=").length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+    function deleteCookie(name) {
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
     }
 });

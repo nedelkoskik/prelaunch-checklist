@@ -1,6 +1,6 @@
 <?php
 
-$filename = 'domains.json';
+$filename = 'domain.json';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle adding a new domain
