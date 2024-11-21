@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const domainForm = document.querySelector('.domain-input form');
     const domainDropdown = document.getElementById('domain-dropdown__menu');
     const checklistContainer = document.querySelector('.checklist');
-    const header = document.querySelector('h1');
+    const headerSpan = document.querySelector('h1 span'); // Target the span inside the header
     const resetButton = document.getElementById('resetButton');
 
     // Load saved domains and initialize dropdown
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetButton.addEventListener('click', () => {
         const currentDomain = domainDropdown.value;
         if (currentDomain) {
-            const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
+            const checkboxes = checklistContainer.querySelectorAll('checklist-single__item input[type="checkbox"]');
             checkboxes.forEach(checkbox => {
                 checkbox.checked = false; // Uncheck the checkbox
                 deleteCookie(`${currentDomain}_${checkbox.id}`); // Delete its saved state
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load the checklist for a specific domain
     function loadChecklist(domain, isNew = false) {
         // Update the header
-        header.textContent = `Prelaunch Checklist for ${domain}`;
+        headerSpan.textContent = domain;
 
         // Set all checkboxes according to the saved state for the domain
         const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
