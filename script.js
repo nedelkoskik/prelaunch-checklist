@@ -1,42 +1,55 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const domainForm = document.getElementById('domain-form');
-    const domainInput = document.getElementById('domain');
-    const domainDropdown = document.getElementById('domain-dropdown__menu');
-    const dynamicDomain = document.getElementById('dynamic-domain');
+document.addEventListener('DOMContentLoaded', () => {
+    const checkboxes = document.querySelectorAll('.checklist-single__item input[type="checkbox"]');
 
-    // Listen for form submission
-    domainForm.addEventListener('submit', function (event) {
-        event.preventDefault(); // Prevent the default form submission
-
-        const domainValue = domainInput.value.trim(); // Get the domain value entered
-
-        if (domainValue && !domainExists(domainValue)) {
-            // Add new option to the dropdown menu
-            const newOption = document.createElement('option');
-            newOption.value = domainValue;
-            newOption.textContent = domainValue;
-
-            domainDropdown.appendChild(newOption);
-
-            // Automatically select the newly added domain
-            domainDropdown.value = domainValue;
-
-            // Update the dynamic domain display
-            dynamicDomain.textContent = domainValue;
-
-            // Clear the input field after submission
-            domainInput.value = '';
+    // Load the saved state from cookies and set the checkboxes accordingly
+    checkboxes.forEach((checkbox) => {
+        const savedState = getCookie(checkbox.id);
+        if (savedState === 'true') {
+            checkbox.checked = true;
         }
+
+        // Add event listener to each checkbox to save the state when changed
+        checkbox.addEventListener('change', () => {
+            saveCheckboxState(checkbox);
+        });
     });
 
-    // Helper function to check if domain already exists in the dropdown
-    function domainExists(domain) {
-        const options = domainDropdown.getElementsByTagName('option');
-        for (let i = 0; i < options.length; i++) {
-            if (options[i].value === domain) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // Add event listener to the reset button
+    const resetButton = document.getElementById('resetButton');
+    resetButton.addEventListener('click', () => {
+        checkboxes.forEach((checkbox) => {
+            checkbox.checked = false; // Uncheck all checkboxes
+            deleteCookie(checkbox.id); // Remove the cookie for that checkbox
+        });
+    });
 });
+
+// Function to save the state of a checkbox in a cookie
+function saveCheckboxState(checkbox) {
+    setCookie(checkbox.id, checkbox.checked, 7); // Save for 7 days
+}
+
+// Function to set a cookie
+function setCookie(name, value, days) {
+    const d = new Date(); //Create a new Date obj to manipulate time
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000)); // Set expiration time - convert milliseconds in days
+    const expires = "expires=" + d.toUTCString(); //Get expriration date in UTC format
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+// Function to get a cookie by name
+function getCookie(name) {
+    const cookies = document.cookie.split(';'); // Get all cookies and break this string into array
+    for (let i = 0; i < cookies.length; i++) { //Loop through all cookies
+        const cookie = cookies[i].trim(); // Trim extra spaces from cookie string
+        if (cookie.indexOf(name + "=") === 0) { // Check if cookie starts with the given name
+            return cookie.substring((name + "=").length, cookie.length); // Extract the value. Exclude the name and = sign and returns everything afret = sign
+        }
+    }
+    return null;
+}
+
+// Function to delete a cookie
+function deleteCookie(name) {
+    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/"; // Expire the cookie immediately
+}
