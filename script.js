@@ -54,86 +54,103 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load checklist for a given domain
     function loadChecklist(domain) {
         dynamicDomainSpan.textContent = domain;
-        checklistContainer.style.display = 'block';
 
-        const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach((checkbox) => {
-            const savedState = getCookie(`${checklistPrefix}${domain}_${checkbox.id}`);
-            checkbox.checked = savedState === 'true';
-
-            checkbox.addEventListener('change', () => {
-                setCookie(`${checklistPrefix}${domain}_${checkbox.id}`, checkbox.checked, 7);
+        // Clear existing checkboxes and their states
+        checklistContainer.innerHTML = '';
+        const existingDomains = JSON.parse(getCookie(domainKey) || "[]");
+        if (existingDomains.includes(domain)) {
+            // Create a new list of checkboxes with the correct ID
+            let checkboxCount = 1;
+            existingDomains.forEach((existingDomain) => {
+                if (existingDomain !== domain) {
+                    const option = document.createElement('option');
+                    option.value = existingDomain;
+                    option.textContent = existingDomain;
+                    dropdownMenu.appendChild(option);
+                }
             });
-        });
-    }
+        }
 
-    // Reset checklist for a given domain
-    function resetChecklist(domain) {
-        const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
-        let isAnyChecked = false;
+        // Generate new checkboxes
+        let checkboxesCount = 0;
+        for (let i = 1; i <= checkboxCount; i++) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `checklist_${domain}_${i}`;
+            checkbox.name = `${domain}_${i}`;
 
-        checkboxes.forEach((checkbox) => {
-            checkbox.checked = false;
-            deleteCookie(`${checklistPrefix}${domain}_${checkbox.id}`);
-        });
+            const label = document.createElement('label');
+            label.textContent = i;
+            label.htmlFor = `checklist_${domain}_${i}`;
 
-        checkboxes.forEach((checkbox) => {
-            if (checkbox.checked) {
-                isAnyChecked = true;
+            const wrapper = document.createElement('div');
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(label);
+
+            checklistContainer.appendChild(wrapper);
+
+            checkboxesCount++;
+        }
+
+        // Initialize checkbox states from cookies
+        const savedStates = getSavedCheckboxesState();
+        Object.keys(savedStates).forEach((key) => {
+            if (savedStates[key] === 'true') {
+                const checkbox = document.querySelector(`#${key}`);
+                checkbox.checked = true;
             }
         });
 
-        if (!isAnyChecked) {
-            deleteDomain(domain);
+        // Add event listener to each checkbox
+        checkboxesCount = 0;
+        for (let i = 1; i <= checkboxCount; i++) {
+            const checkbox =
+                document.querySelector(`#${checklistPrefix}${domain}_${i}`);
+            checkbox.addEventListener('change', () => {
+                saveCheckboxesState();
+            });
         }
     }
 
-    // Save a new domain to the list
-    function saveDomain(domain) {
-        let domains = JSON.parse(getCookie(domainKey) || "[]");
-        if (!domains.includes(domain)) {
-            domains.push(domain);
-            setCookie(domainKey, JSON.stringify(domains), 7);
-        }
-    }
-
-    // Load all saved domains into the dropdown
-    function loadDomains() {
-        let domains = JSON.parse(getCookie(domainKey) || "[]");
-        domains.forEach((domain) => {
-            addDomainToDropdown(domain);
-        });
-    }
-
-    // Add a domain to the dropdown
-    function addDomainToDropdown(domain) {
-        const exists = Array.from(dropdownMenu.options).some(option => option.value === domain);
-        if (!exists) {
-            const option = document.createElement('option');
-            option.value = domain;
-            option.textContent = domain;
-            dropdownMenu.appendChild(option);
-        }
-    }
-
-    // Delete a domain from the dropdown and cookies
-    function deleteDomain(domain) {
-        let domains = JSON.parse(getCookie(domainKey) || "[]");
-        domains = domains.filter((d) => d !== domain);
-        setCookie(domainKey, JSON.stringify(domains), 7);
-
-        const options = Array.from(dropdownMenu.options);
-        options.forEach((option) => {
-            if (option.value === domain) {
-                dropdownMenu.removeChild(option);
-            }
-        });
-
-        if (dropdownMenu.value === domain) {
-            dropdownMenu.value = '';
-            dynamicDomainSpan.textContent = 'WordPress Site';
+    // Event listener for domain dropdown change
+    dropdownMenu.addEventListener('change', () => {
+        const selectedDomain = dropdownMenu.value;
+        if (selectedDomain) {
+            loadChecklist(selectedDomain);
+            deleteCookie(domainKey + '_' + selectedDomain); // Remove existing cookie
+        } else {
             checklistContainer.style.display = 'none';
+            dynamicDomainSpan.textContent = 'WordPress Site';
         }
+    });
+
+    // Save checkboxes state to cookies
+    function saveCheckboxesState() {
+        let savedStates = getSavedCheckboxesState();
+        Object.keys(savedStates).forEach((key) => {
+            const domainAndIndex = key.split('_');
+            if (domainAndIndex[0] === `${checklistPrefix}${dropdownMenu.value}_`) {
+                const index = parseInt(domainAndIndex[1]);
+                savedStates[key] = document.querySelector(`#${key}`).checked ?
+                    'true' : 'false';
+            }
+        });
+
+        setCookie(domainKey, JSON.stringify(savedStates), 30 * 24 * 60 * 60);
+    }
+
+    // Get saved checkboxes state from cookies
+    function getSavedCheckboxesState() {
+        const domains = JSON.parse(getCookie(domainKey));
+        return {};
+    }
+
+    // Add domain to dropdown menu if it doesn't exist
+    function addDomainToDropdown(domain) {
+        let option = document.createElement('option');
+        option.value = domain;
+        option.textContent = domain;
+        dropdownMenu.appendChild(option);
     }
 
     // Cookie helpers
