@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const domainForm = document.querySelector('.domain-input form');
     const domainDropdown = document.getElementById('domain-dropdown__menu');
     const checklistContainer = document.querySelector('.checklist');
+    const header = document.querySelector('h1');
     const resetButton = document.getElementById('resetButton');
 
     // Load saved domains and initialize dropdown
@@ -21,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
             setCookie('domains', JSON.stringify(savedDomains), 7);
             addDomainToDropdown(domain);
             loadChecklist(domain, true); // Load a new, empty checklist for the new domain
+        } else if (domain) {
+            // If domain already exists, just load it
+            loadChecklist(domain);
         }
         domainInput.value = ''; // Clear input
     });
@@ -39,8 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentDomain) {
             const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-                deleteCookie(`${currentDomain}_${checkbox.id}`); // Clear cookies for this domain's checklist
+                checkbox.checked = false; // Uncheck the checkbox
+                deleteCookie(`${currentDomain}_${checkbox.id}`); // Delete its saved state
             });
         }
     });
@@ -55,12 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load the checklist for a specific domain
     function loadChecklist(domain, isNew = false) {
+        // Update the header
+        header.textContent = `Prelaunch Checklist for ${domain}`;
+
+        // Set all checkboxes according to the saved state for the domain
         const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             const savedState = isNew ? null : getCookie(`${domain}_${checkbox.id}`);
             checkbox.checked = savedState === 'true';
 
-            // Update event listeners for the new domain
+            // Update event listener to save state for the current domain
             checkbox.addEventListener('change', () => saveCheckboxState(domain, checkbox));
         });
     }
