@@ -1,29 +1,28 @@
 <?php
 
-// Set the file to store domains
-$filePath = 'domains.txt';
+$filename = 'domains.json';
 
-// Handle form submission
+// Handle POST request to save domain
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $domain = trim($_POST['domain']);
+    $data = json_decode(file_get_contents('php://input'), true);
+    $domain = $data['domain'];
 
-    // Validate and save the domain
-    if (!empty($domain)) {
-        $domains = file_exists($filePath) ? file($filePath, FILE_IGNORE_NEW_LINES) : [];
+    if ($domain) {
+        $domains = file_exists($filename) ? json_decode(file_get_contents($filename), true) : [];
         if (!in_array($domain, $domains)) {
-            file_put_contents($filePath, $domain . PHP_EOL, FILE_APPEND);
+            $domains[] = $domain;
+            file_put_contents($filename, json_encode($domains));
         }
     }
-    header("Location: index.html"); // Redirect back to the form
     exit;
 }
 
-// Output the saved domains as JSON for JavaScript to use
+// Handle GET request to retrieve domains
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    header('Content-Type: application/json');
-    if (file_exists($filePath)) {
-        echo json_encode(file($filePath, FILE_IGNORE_NEW_LINES));
+    if (file_exists($filename)) {
+        echo file_get_contents($filename);
     } else {
         echo json_encode([]);
     }
+    exit;
 }
