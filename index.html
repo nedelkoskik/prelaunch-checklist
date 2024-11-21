@@ -9,7 +9,24 @@
 
 <body>
 
-    <h1>Prelaunch Checklist for Wordpress Site</h1>
+    <div class="domain">
+        <div class="domain-input">
+            <form action="domain.php" id="domain-form" method="POST">
+                <label for="domain">Enter Domain:</label>
+                <input type="text" id="domain" name="domain" placeholder="e.g., example.com" required>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+        <div class="domain-dropdown">
+            <label for="domain-menu">Select Domain:</label>
+            <select id="domain-dropdown__menu">
+                <option value="">-- Select Doomain --</option>
+            </select>
+        </div>
+    </div>
+
+    <h1>Prelaunch Checklist for <span id="dynamic-domain">WordPress Site</span></h1>
+    <button class="back">Back</button>
     <div class="checklist">
         <div class="checklist-single">
             <div class="checklist-single__title">
