@@ -16,11 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedChecklist = domainChecklists[domain] || {};
         const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
 
-        // Set checkboxes based on saved data
-        checkboxes.forEach((checkbox) => {
+        // Remove existing event listeners by cloning the checklist container
+        const clonedChecklist = checklistContainer.cloneNode(true);
+        checklistContainer.replaceWith(clonedChecklist);
+
+        // Update checklistContainer reference
+        checklistContainer = document.querySelector('.checklist');
+
+        // Add event listeners and set checkbox states
+        const updatedCheckboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
+        updatedCheckboxes.forEach((checkbox) => {
             checkbox.checked = savedChecklist[checkbox.id] || false;
 
-            // Add event listener to update the checklist when a checkbox changes
+            // Add event listener to save checkbox state when changed
             checkbox.addEventListener('change', () => {
                 savedChecklist[checkbox.id] = checkbox.checked;
                 domainChecklists[domain] = savedChecklist;
