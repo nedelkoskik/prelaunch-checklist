@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const checkboxes = document.querySelectorAll('.checklist-single__item input[type="checkbox"]');
-    console.log(checkboxes);
+
     // Load the saved state from cookies and set the checkboxes accordingly
     checkboxes.forEach((checkbox) => {
         const savedState = getCookie(checkbox.id);
@@ -46,7 +46,7 @@ function getCookie(name) {
             return cookie.substring((name + "=").length, cookie.length); // Extract the value. Exclude the name and = sign and returns everything afret = sign
         }
     }
-
+    console.log(cookies);
     return null;
 
 }
