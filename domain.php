@@ -2,27 +2,30 @@
 
 $filename = 'domains.json';
 
-// Handle POST request to save domain
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $domain = $data['domain'];
+    // Handle adding a new domain
+    $data = file_get_contents('php://input');
+    $decodedData = json_decode($data, true);
+    $newDomain = $decodedData['domain'];
 
-    if ($domain) {
-        $domains = file_exists($filename) ? json_decode(file_get_contents($filename), true) : [];
-        if (!in_array($domain, $domains)) {
-            $domains[] = $domain;
-            file_put_contents($filename, json_encode($domains));
-        }
-    }
-    exit;
-}
-
-// Handle GET request to retrieve domains
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (file_exists($filename)) {
-        echo file_get_contents($filename);
+        $domains = json_decode(file_get_contents($filename), true);
+    } else {
+        $domains = [];
+    }
+
+    if (!in_array($newDomain, $domains)) {
+        $domains[] = $newDomain;
+        file_put_contents($filename, json_encode($domains));
+    }
+
+    echo json_encode($domains);
+} else {
+    // Handle retrieving all domains
+    if (file_exists($filename)) {
+        $domains = json_decode(file_get_contents($filename), true);
+        echo json_encode($domains);
     } else {
         echo json_encode([]);
     }
-    exit;
 }

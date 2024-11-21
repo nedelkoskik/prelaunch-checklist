@@ -1,112 +1,96 @@
 document.addEventListener('DOMContentLoaded', () => {
     const domainForm = document.getElementById('domain-form');
-    const domainDropdown = document.getElementById('domain-dropdown__menu');
+    const domainInput = document.getElementById('domain');
+    const dropdownMenu = document.getElementById('domain-dropdown__menu');
     const checklistContainer = document.querySelector('.checklist');
     const resetButton = document.getElementById('resetButton');
+    const checklists = {}; // Object to store checklists for each domain
 
-    // Initially hide the checklist
-    checklistContainer.style.display = 'none';
-
-    // Fetch stored domains and populate the dropdown
+    // Fetch existing domains and populate the dropdown
     fetchDomains();
 
     // Handle domain form submission
-    domainForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const domainInput = document.getElementById('domain').value.trim();
-
-        if (domainInput) {
-            // Send the domain to domain.php
-            await fetch('domain.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domain: domainInput }),
-            });
-
-            // Update the dropdown and select the new domain
-            await fetchDomains();
-            domainDropdown.value = domainInput;
-            displayChecklist(domainInput);
+    domainForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newDomain = domainInput.value.trim();
+        if (newDomain) {
+            await saveDomain(newDomain); // Save domain to server
+            domainInput.value = ''; // Clear input field
         }
     });
 
-    // Handle dropdown change
-    domainDropdown.addEventListener('change', () => {
-        const selectedDomain = domainDropdown.value;
+    // Handle dropdown selection
+    dropdownMenu.addEventListener('change', (e) => {
+        const selectedDomain = e.target.value;
         if (selectedDomain) {
-            displayChecklist(selectedDomain);
+            loadChecklist(selectedDomain);
         } else {
             checklistContainer.style.display = 'none';
         }
     });
 
-    // Reset checklist
-    resetButton.addEventListener('click', () => {
-        const selectedDomain = domainDropdown.value;
-        if (selectedDomain) {
-            resetChecklist(selectedDomain);
-        }
-    });
+    // Load the saved checklist for a domain
+    function loadChecklist(domain) {
+        checklistContainer.style.display = 'block';
 
-    // Fetch stored domains from server
+        const checkboxes = checklistContainer.querySelectorAll('input[type="checkbox"]');
+        const savedChecklist = checklists[domain] || {};
+
+        checkboxes.forEach((checkbox) => {
+            checkbox.checked = savedChecklist[checkbox.id] || false;
+
+            checkbox.addEventListener('change', () => {
+                saveChecklistState(domain, checkbox);
+            });
+        });
+
+        resetButton.addEventListener('click', () => {
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = false;
+            });
+            checklists[domain] = {}; // Reset domain's checklist
+        });
+    }
+
+    // Save checklist state for a domain
+    function saveChecklistState(domain, checkbox) {
+        if (!checklists[domain]) {
+            checklists[domain] = {};
+        }
+        checklists[domain][checkbox.id] = checkbox.checked;
+    }
+
+    // Fetch domains from the server
     async function fetchDomains() {
         const response = await fetch('domain.php');
         const domains = await response.json();
+        populateDropdown(domains);
+    }
 
-        // Populate dropdown
-        domainDropdown.innerHTML = '<option value="">-- Select Domain --</option>';
+    // Save a new domain to the server
+    async function saveDomain(domain) {
+        const response = await fetch('domain.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain }),
+        });
+        const domains = await response.json();
+        populateDropdown(domains, domain);
+    }
+
+    // Populate the dropdown with domains
+    function populateDropdown(domains, autoSelectDomain = null) {
+        dropdownMenu.innerHTML = '<option value="">-- Select Domain --</option>';
         domains.forEach((domain) => {
             const option = document.createElement('option');
             option.value = domain;
             option.textContent = domain;
-            domainDropdown.appendChild(option);
+            dropdownMenu.appendChild(option);
         });
-    }
 
-    // Display checklist for a specific domain
-    function displayChecklist(domain) {
-        checklistContainer.style.display = 'block';
-
-        const checkboxes = document.querySelectorAll('.checklist-single__item input[type="checkbox"]');
-        checkboxes.forEach((checkbox) => {
-            const savedState = getCookie(`${domain}_${checkbox.id}`);
-            checkbox.checked = savedState === 'true';
-
-            checkbox.onchange = () => {
-                setCookie(`${domain}_${checkbox.id}`, checkbox.checked, 7);
-            };
-        });
-    }
-
-    // Reset checklist for a specific domain
-    function resetChecklist(domain) {
-        const checkboxes = document.querySelectorAll('.checklist-single__item input[type="checkbox"]');
-        checkboxes.forEach((checkbox) => {
-            checkbox.checked = false;
-            deleteCookie(`${domain}_${checkbox.id}`);
-        });
-    }
-
-    // Cookie utility functions
-    function setCookie(name, value, days) {
-        const d = new Date();
-        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-        const expires = 'expires=' + d.toUTCString();
-        document.cookie = `${name}=${value};${expires};path=/`;
-    }
-
-    function getCookie(name) {
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-            if (cookie.startsWith(name + '=')) {
-                return cookie.substring(name.length + 1);
-            }
+        if (autoSelectDomain) {
+            dropdownMenu.value = autoSelectDomain;
+            loadChecklist(autoSelectDomain);
         }
-        return null;
-    }
-
-    function deleteCookie(name) {
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
     }
 });
