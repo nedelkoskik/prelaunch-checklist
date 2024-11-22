@@ -1,19 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
     const checkboxes = document.querySelectorAll('.checklist-single__item input[type="checkbox"]');
-
     // Load the saved state from cookies and set the checkboxes accordingly
+    const checkboxObj = {};
     checkboxes.forEach((checkbox) => {
         const savedState = getCookie(checkbox.id);
         if (savedState === 'true') {
             checkbox.checked = true;
+            checkboxObj[checkbox.id] = checkbox.checked;
         }
 
         // Add event listener to each checkbox to save the state when changed
         checkbox.addEventListener('change', () => {
-            saveCheckboxState(checkbox);
+            id = checkbox.id;
+            value = checkbox.checked;
+            checkboxObj[id] = value;
+            setCookie(id, value, 7)
         });
     });
 
+    console.log(checkboxObj);
     // Add event listener to the reset button
     const resetButton = document.getElementById('resetButton');
     resetButton.addEventListener('click', () => {
@@ -24,18 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Function to save the state of a checkbox in a cookie
-function saveCheckboxState(checkbox) {
-    setCookie(checkbox.id, checkbox.checked, 7); // Save for 7 days
-}
-
-// Function to set a cookie
-function setCookie(name, value, days) {
-    const d = new Date(); //Create a new Date obj to manipulate time
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000)); // Set expiration time - convert milliseconds in days
-    const expires = "expires=" + d.toUTCString(); //Get expriration date in UTC format
-    document.cookie = name + "=" + value + ";" + expires + ";path=/";
-}
 
 // Function to get a cookie by name
 function getCookie(name) {
@@ -46,9 +39,21 @@ function getCookie(name) {
             return cookie.substring((name + "=").length, cookie.length); // Extract the value. Exclude the name and = sign and returns everything afret = sign
         }
     }
-    console.log(cookies);
-    return null;
 
+    return null;
+}
+
+// Function to set a cookie
+function setCookie(name, value, days) {
+    const d = new Date(); //Create a new Date obj to manipulate time
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000)); // Set expiration time - convert milliseconds in days
+    const expires = "expires=" + d.toUTCString(); //Get expriration date in UTC format
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+// Function to save the state of a checkbox in a cookie
+function saveCheckboxState(checkbox) {
+    setCookie(checkbox.id, checkbox.checked, 7); // Save for 7 days
 }
 
 // Function to delete a cookie
